@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Queue — MAGCOOP</title>
+    <style>
+        * {margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif;}
+        body {background:linear-gradient(135deg, #003399, #004de6); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+        .card {background:white; border-radius:12px; padding:35px 25px; width:100%; max-width:420px; box-shadow:0 6px 24px rgba(0,0,0,0.25);}
+        .logo {text-align:center; margin-bottom:30px;}
+        .logo-text {font-size:36px; font-weight:900;}
+        .mag {color:#003399;} .coop {color:#ffcc00;}
+        h2 {text-align:center; color:#333; margin-bottom:25px; font-size:22px;}
+        label {display:block; margin-bottom:10px; font-weight:bold; color:#444; font-size:16px;}
+        input {width:100%; padding:16px; font-size:18px; border:2px solid #ddd; border-radius:8px; margin-bottom:25px; text-transform:uppercase;}
+        input:focus {outline:none; border-color:#003399; box-shadow:0 0 0 3px rgba(0,51,153,0.1);}
+        button {width:100%; padding:16px; font-size:18px; font-weight:bold; background:#28a745; color:white; border:none; border-radius:8px; cursor:pointer; transition:0.2s;}
+        button:hover {background:#218838; transform:scale(1.02);}
+        .success {display:none; text-align:center; padding:20px 10px;}
+        .success h3 {color:#28a745; margin-bottom:12px; font-size:24px;}
+        .status {margin-top:15px; font-size:14px; color:#28a745; text-align:center; min-height:20px; font-weight:bold;}
+        .back-link {display:block; text-align:center; margin-top:20px; color:#fff; text-decoration:none;}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <h1 class="logo-text"><span class="mag">MAG</span><span class="coop">COOP</span></h1>
+        </div>
+        <div id="form-view">
+            <h2>Join the Queue</h2>
+            <label for="fullname">Your Full Name</label>
+            <input type="text" id="fullname" placeholder="ENTER YOUR NAME..." autocomplete="off">
+            <button id="submit-btn">Submit to Queue</button>
+            <p class="status" id="status-msg"></p>
+        </div>
+        <div class="success" id="done-view">
+            <h3>✅ ADDED!</h3>
+            <p>Your name is in the queue.<br>Please wait to be called.</p>
+            <br>
+            <button onclick="resetForm()">Add Another Person</button>
+        </div>
+    </div>
+    <a href="main.html" class="back-link">← Back to Main Display</a>
+
+    <script>
+        const nameInput = document.getElementById('fullname');
+        
+        // AUTO UPPERCASE AS YOU TYPE
+        nameInput.addEventListener('input', function() {
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            this.value = this.value.toUpperCase();
+            this.setSelectionRange(start, end);
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', addName);
+        nameInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') addName();
+        });
+
+        function addName() {
+            const name = nameInput.value.trim();
+            const statusEl = document.getElementById('status-msg');
+            
+            if (!name) {
+                statusEl.textContent = "⚠️ PLEASE ENTER YOUR NAME";
+                statusEl.style.color = "#dc3545";
+                return;
+            }
+
+            let queue = [];
+            const stored = localStorage.getItem('magcoop_queue');
+            if (stored) queue = JSON.parse(stored);
+            
+            queue.push(name.toUpperCase());
+            localStorage.setItem('magcoop_queue', JSON.stringify(queue));
+            
+            window.dispatchEvent(new Event('storage'));
+            
+            document.getElementById('form-view').style.display = 'none';
+            document.getElementById('done-view').style.display = 'block';
+        }
+
+        function resetForm() {
+            document.getElementById('form-view').style.display = 'block';
+            document.getElementById('done-view').style.display = 'none';
+            nameInput.value = '';
+            document.getElementById('status-msg').textContent = '';
+        }
+    </script>
+</body>
+</html>

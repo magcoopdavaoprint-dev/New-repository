@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — MAGCOOP</title>
+    <style>
+        * {margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif;}
+        body {background:#f0f4f8; padding:30px;}
+        .container {max-width:700px; margin:0 auto;}
+        
+        .header {text-align:center; margin-bottom:30px;}
+        .logo-text {font-size:36px; font-weight:900; letter-spacing:2px; margin-bottom:10px;}
+        .mag {color:#003399;} .coop {color:#ffcc00;}
+        .page-title {font-size:24px; color:#333; margin-top:10px;}
+        
+        .serving-box {background:white; border-radius:8px; padding:25px; margin-bottom:25px; box-shadow:0 4px 12px rgba(0,0,0,0.1); text-align:center;}
+        .serving-label {font-size:16px; color:#666; margin-bottom:10px;}
+        .serving-name {font-size:42px; font-weight:bold; color:#003399; text-transform:uppercase;}
+        
+        .controls {display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:25px;}
+        button {padding:18px 24px; font-size:18px; font-weight:bold; border:none; border-radius:8px; cursor:pointer; transition:0.2s;}
+        .btn-next {background:#003399; color:white;}
+        .btn-next:hover {background:#002266;}
+        .btn-reset {background:#e63946; color:white;}
+        .btn-reset:hover {background:#c1121f;}
+        .voice-status {margin-top:12px; font-size:14px; color:#555; padding:10px; background:#f5f5f5; border-radius:6px; text-align:center;}
+        
+        .waiting-box {background:white; border-radius:8px; padding:25px; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+        .waiting-header {font-size:22px; font-weight:bold; color:#003399; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;}
+        .count-badge {background:#003399; color:white; padding:6px 14px; border-radius:20px; font-size:18px;}
+        .waiting-item {padding:14px 15px; border-bottom:1px solid #eee; font-size:18px; text-transform:uppercase;}
+        .waiting-item:last-child {border-bottom:none;}
+        .empty-msg {color:#999; font-style:italic; text-align:center; padding:25px;}
+        
+        .links {margin-top:25px; text-align:center;}
+        .links a {color:#003399; font-weight:bold; text-decoration:none; margin:0 10px;}
+        
+        @media (max-width:500px) {.controls {grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="logo-text"><span class="mag">MAG</span><span class="coop">COOP</span></h1>
+            <p class="page-title">🔐 ADMIN PANEL</p>
+        </div>
+
+        <div class="serving-box">
+            <div class="serving-label">CURRENTLY SERVING</div>
+            <div class="serving-name" id="admin-serving">—</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-next" id="next-button">▶ CALL NEXT</button>
+            <button class="btn-reset" id="reset-button">🗑️ RESET ALL</button>
+        </div>
+        <div class="voice-status" id="voice-status">🔊 Voice: Ready</div>
+
+        <div class="waiting-box">
+            <div class="waiting-header">
+                Waiting List
+                <span class="count-badge" id="wait-count">0</span>
+            </div>
+            <div id="waiting-names">
+                <div class="empty-msg">No one in queue yet</div>
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="main.html" target="_blank">📺 Main Display</a>
+            <a href="form.html" target="_blank">➕ Add Names</a>
+        </div>
+    </div>
+
+    <script>
+        const VOICE_SPEED = 1.4;
+        let queue = [];
+        let servingName = null;
+
+        // LOAD DATA FROM SHARED STORAGE
+        function loadData() {
+            const storedQueue = localStorage.getItem('magcoop_queue');
+            const storedServing = localStorage.getItem('magcoop_serving');
+            
+            if (storedQueue) queue = JSON.parse(storedQueue);
+            if (storedServing) servingName = storedServing;
+            
+            updateDisplay();
+        }
+
+        function saveData() {
+            localStorage.setItem('magcoop_queue', JSON.stringify(queue));
+            localStorage.setItem('magcoop_serving', servingName || '');
+            window.dispatchEvent(new Event('storage'));
+        }
+
+        function updateDisplay() {
+            document.getElementById('wait-count').textContent = queue.length;
+            document.getElementById('admin-serving').textContent = servingName || "—";
+            
+            const listEl = document.getElementById('waiting-names');
+            if (queue.length === 0) {
+                listEl.innerHTML = '<div class="empty-msg">No one in queue yet</div>';
+            } else {
+                listEl.innerHTML = queue.map((name, i) => 
+                    `<div class="waiting-item">${i+1}. ${escapeHtml(name)}</div>`
+                ).join('');
+            }
+        }
+
+        // CALL NEXT
+        document.getElementById('next-button').addEventListener('click', () => {
+            if (queue.length === 0) {
+                speak("No one is waiting.");
+                return;
+            }
+            servingName = queue.shift();
+            saveData();
+            updateDisplay();
+            speak(`Now serving, ${servingName}. Please proceed to Encoder.`);
+        });
+
+        // RESET ALL
+        document.getElementById('reset-button').addEventListener('click', () => {
+            if (confirm("⚠️ CLEAR ALL NAMES IN QUEUE?\nThis cannot be undone!")) {
+                queue = [];
+                servingName = null;
+                saveData();
+                updateDisplay();
+                speak("Queue has been reset.");
+            }
+        });
+
+        // VOICE ANNOUNCEMENT
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = VOICE_SPEED; u.pitch = 1.1; u.volume = 1;
+            u.onstart = () => document.getElementById('voice-status').textContent = "🔊 Speaking...";
+            u.onend = () => document.getElementById('voice-status').textContent = "🔊 Voice: Ready";
+            window.speechSynthesis.speak(u);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // AUTO REFRESH
+        window.addEventListener('storage', loadData);
+        setInterval(loadData, 500);
+        window.onload = loadData;
+    </script>
+</body>
+</html>
