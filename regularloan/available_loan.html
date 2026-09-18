@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background-color: blue;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: blue;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: blue;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: darkblue;
+        }
+
+        .results {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: blue;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        #totalLoanToAvail {
+            font-size: 18px;
+            font-weight: bold;
+            color: blue;
+        }
+
+        .navigation-button {
+            display: block;
+            background-color: blue;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .navigation-button:hover {
+            background-color: darkblue;
+        }
+    </style>
+    <title>Available Loan</title>
+</head>
+<body>
+    <div class="container">
+        <a href="banner.jpg" target="_blank">
+            <img src="banner.jpg" alt="Banner Image" style="width: 100%; height: auto; border-radius: 8px;">
+        </a>
+
+        <!-- New button for Regular Loan Computation -->
+        <a class="navigation-button" href="index.html">Regular Loan Computation</a>
+
+        <h1>Available Loan </h1>
+
+        <div class="input-group">
+            <label for="allotmentSalary">Allotment Salary:</label>
+            <input type="number" id="allotmentSalary" placeholder="Enter allotment salary" required>
+        </div>
+
+        <div class="input-group">
+            <label for="monthsOfContract">Months of Contract:</label>
+            <input type="number" id="monthsOfContract" placeholder="Enter months of contract" required>
+        </div>
+
+        <div class="input-group">
+            <label for="currency">Currency:</label>
+            <select id="peso">
+                <option value="50">USD (US Dollar)</option>
+                <option value="30">AUSD (Australian Dollar)</option>
+            </select>
+        </div>
+
+        <!-- Include the new input in the button click -->
+        <button onclick="calculateTotalLoanToAvail()">Calculate Total Loan to Avail</button>
+
+        <div class="results">
+            <h2>Results:</h2>
+            <p>Total Loan to Avail: <span id="totalLoanToAvail">-</span></p>
+        </div>
+    </div>
+
+    <script src="script2.js"></script>
+</body>
+
+</html>

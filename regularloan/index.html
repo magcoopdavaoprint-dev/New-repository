@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background-color: blue;
+            color: #000; /* Change font color to black */
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .navigation-button {
+            display: block;
+            background-color: #3498db;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .navigation-button:hover {
+            background-color: #2980b9;
+        }
+
+        h1 {
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .results {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        #loanAmountDisplay,
+        #netToBeReceived {
+            color: #3498db; /* Change font color to blue for specific elements */
+            font-weight: bold;
+        }
+    </style>
+    <title>Regular Loan Computation</title>
+</head>
+<body>
+    <div class="container">
+        <a href="banner.jpg" target="_blank">
+            <img src="banner.jpg" alt="Banner Image" style="width: 100%; height: auto;">
+        </a>
+
+        <!-- New button for Available Loan to Avail -->
+        <a class="navigation-button" href="available_loan.html">Available Loan to Avail</a>
+
+        <h1>Regular Loan Computation</h1>
+
+        <div class="input-group">
+            <label for="loanAmount">Loan Amount:</label>
+            <input type="number" id="loanAmount" placeholder="Enter loan amount" required>
+        </div>
+
+        <div class="input-group">
+            <label for="loanTerm">Loan Term (months):</label>
+            <input type="number" id="loanTerm" placeholder="Enter loan term in months" required>
+        </div>
+
+        <div class="input-group">
+            <label for="existingMemberSharedCapital">Existing Member Shared Capital:</label>
+            <input type="number" id="existingMemberSharedCapital" placeholder="Enter existing member shared capital">
+        </div>
+
+        <div class="input-group">
+            <label for="advanceInterest">Advance Interest:</label>
+            <input type="number" id="advanceInterest" placeholder="Enter advance interest percentage">
+        </div>
+
+        <!-- Include the new input in the button click -->
+        <button onclick="calculateLoan()">Calculate</button>
+
+        <div class="results">
+            <h2>Results:</h2>
+            <table>
+                <tr>
+                    <th>Credit Background</th>
+                    <th>Amount</th>
+                </tr>
+                <tr>
+                    <td>Loan Amount</td>
+                    <td id="loanAmountDisplay">-</td>
+                </tr>
+                <tr>
+                    <td>PN TOTAL</td>
+                    <td id="pnTotal">-</td>
+                </tr>
+                <tr>
+                    <td>Less: Service Fee</td>
+                    <td id="serviceFee">-</td>
+                </tr>
+                <tr>
+                    <td>Savings</td>
+                    <td id="savings">-</td>
+                </tr>
+                <tr>
+<tr>
+    <td>Total Interest</td>
+    <td id="totalInterest">-</td>
+</tr>
+                <tr>
+                    <td>Member's Share Capital</td>
+                    <td id="sharedCapitalRequired">-</td>
+                </tr>
+                <tr>
+                    <td>Surcharge/Advance Interest</td>
+                    <td id="surcharge">-</td>
+                </tr>
+                <tr>
+                    <td>Total Deduction</td>
+                    <td id="totalDeduction">-</td>
+                </tr>
+                <tr>
+                    <td>NET PROCEEDS:</td>
+                    <td id="netToBeReceived">-</td>
+                </tr>
+                <tr>
+                    <td>Monthly Payment</td>
+                    <td id="monthlyPayment">-</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

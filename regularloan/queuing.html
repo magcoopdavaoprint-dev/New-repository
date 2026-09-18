@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAGCOOP Queuing System — Cloud</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        * {margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif;}
+        body {background:#f0f4f8; padding:20px;}
+        .container {max-width:1300px; margin:0 auto;}
+        .logo-text {font-size:42px; font-weight:900; letter-spacing:1px; margin-bottom:25px;}
+        .mag {color:#003399;} .coop {color:#ffcc00;}
+        
+        .main-grid {display:grid; grid-template-columns:400px 1fr; gap:20px;}
+        .panel {display:flex; flex-direction:column; gap:15px;}
+        
+        .section-box {border-radius:6px; overflow:hidden;}
+        .section-header {background:#003399; color:white; padding:14px 18px; font-size:22px; font-weight:bold;}
+        .section-body {background:#ffcc00; color:#003399; padding:40px 25px; min-height:200px; display:flex; flex-direction:column; justify-content:center;}
+        .customer-name {font-size:52px; font-weight:bold; margin-bottom:12px; word-break:break-word;}
+        .ticket-desc {font-size:20px;}
+        
+        .qr-box {background:white; border-radius:6px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+        .qr-title {font-size:18px; font-weight:bold; margin-bottom:12px; color:#003399;}
+        #qr-canvas {max-width:220px; margin:0 auto;}
+        .qr-note {margin-top:10px; font-size:13px; color:#555;}
+        
+        .image-container {border:6px solid #ffcc00; border-radius:6px; overflow:hidden; min-height:450px;}
+        .image-container img {width:100%; height:100%; object-fit:cover;}
+        
+        .controls {display:flex; gap:12px; margin-top:5px;}
+        button {padding:14px 28px; font-size:18px; font-weight:bold; border:none; border-radius:6px; cursor:pointer; transition:0.2s;}
+        .btn-next {background:#003399; color:white;}
+        .btn-next:hover {background:#002266;}
+        .btn-reset {background:#e63946; color:white;}
+        .btn-reset:hover {background:#c1121f;}
+        
+        .voice-status {margin-top:12px; font-size:14px; color:#555;}
+        .waiting-list {background:white; border-radius:6px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+        .waiting-list h3 {color:#003399; margin-bottom:10px; font-size:16px;}
+        .waiting-item {padding:10px 12px; border-bottom:1px solid #eee; font-size:15px;}
+        .waiting-item:last-child {border-bottom:none;}
+        .status-box {background:#eef5ff; border-radius:6px; padding:10px; margin-top:10px; font-size:13px;}
+        .online {color:green; font-weight:bold;}
+        .offline {color:red; font-weight:bold;}
+        
+        @media (max-width:900px) {.main-grid {grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="logo-text">
+            <span class="mag">MAG</span><span class="coop">COOP</span>
+        </h1>
+
+        <div class="main-grid">
+            <div class="panel">
+                <div class="section-box">
+                    <div class="section-header">Now Serving</div>
+                    <div class="section-body">
+                        <div class="customer-name" id="customer-name">—</div>
+                        <div class="ticket-desc">Proceed to Encoder</div>
+                    </div>
+                </div>
+
+                <div class="qr-box">
+                    <div class="qr-title">📱 Scan to Join Queue</div>
+                    <canvas id="qr-canvas"></canvas>
+                    <p class="qr-note">Enter your name — no number needed</p>
+                </div>
+
+                <div class="status-box" id="connection-status">🔄 Connecting to cloud...</div>
+
+                <div class="controls">
+                    <button class="btn-next" onclick="callNext()">Call Next →</button>
+                    <button class="btn-reset" onclick="resetQueue()">Reset</button>
+                </div>
+                <div class="voice-status" id="voice-status">🔊 Voice: Ready</div>
+
+                <div class="waiting-list">
+                    <h3>Waiting List (<span id="wait-count">0</span>)</h3>
+                    <div id="waiting-names"></div>
+                </div>
+            </div>
+
+            <div class="image-container">
+                <img src="port-area.jpg" alt="Service Area View">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CLOUD DATABASE SETUP (Free Firebase) =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqZ9xZJTLw0bFhVgKqXz9YwPnDk8ZxM6s",
+            authDomain: "magcoop-queue.firebaseapp.com",
+            databaseURL: "https://magcoop-queue-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "magcoop-queue",
+            storageBucket: "magcoop-queue.appspot.com",
+            messagingSenderId: "555123456789",
+            appId: "1:555123456789:web:abc123def456ghi789jkl01"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const queueRef = db.ref('queue');
+        const servingRef = db.ref('serving');
+
+        const VOICE_SPEED = 1.4;
+        let localQueue = [];
+        let formUrl = "";
+
+        // ===== CONNECTION STATUS =====
+        db.ref('.info/connected').on('value', snap => {
+            const connected = snap.val();
+            document.getElementById('connection-status').innerHTML = 
+                connected ? '<span class="online">✅ Cloud Connected — Ready!</span>' 
+                          : '<span class="offline">❌ Disconnected — Check Internet</span>';
+        });
+
+        // ===== LISTEN FOR QUEUE UPDATES =====
+        queueRef.on('value', snapshot => {
+            const data = snapshot.val() || {};
+            localQueue = Object.values(data);
+            updateWaitingList();
+        });
+
+        // ===== LISTEN FOR SERVING UPDATES =====
+        servingRef.on('value', snapshot => {
+            const name = snapshot.val();
+            document.getElementById('customer-name').textContent = name || "—";
+        });
+
+        function updateWaitingList() {
+            document.getElementById('wait-count').textContent = localQueue.length;
+            document.getElementById('waiting-names').innerHTML = 
+                localQueue.map((name, i) => 
+                    `<div class="waiting-item">${i+1}. ${escapeHtml(name)}</div>`
+                ).join('');
+        }
+
+        function callNext() {
+            if (localQueue.length === 0) {
+                speak("No one is waiting.");
+                return;
+            }
+            // Remove first from database
+            queueRef.limitToFirst(1).once('value', snap => {
+                const records = snap.val();
+                if (!records) return;
+                const key = Object.keys(records)[0];
+                const name = records[key];
+                
+                // Update serving & remove from queue
+                servingRef.set(name);
+                queueRef.child(key).remove();
+                
+                speak(`Now serving, ${name}. Please proceed to Encoder.`);
+            });
+        }
+
+        function resetQueue() {
+            queueRef.set({});
+            servingRef.set(null);
+            speak("Queue has been reset.");
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = VOICE_SPEED; u.pitch = 1.1; u.volume = 1;
+            u.onstart = () => document.getElementById('voice-status').textContent = "🔊 Speaking...";
+            u.onend = () => document.getElementById('voice-status').textContent = "🔊 Voice: Ready";
+            window.speechSynthesis.speak(u);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== GENERATE QR CODE =====
+        // Form page — upload form.html to same folder or use below
+        formUrl = window.location.href.replace('queue.html', 'form.html');
+        QRCode.toCanvas(document.getElementById('qr-canvas'), formUrl, {
+            width: 220, margin: 2, color: {dark:'#003399', light:'#fff'}
+        });
+    </script>
+</body>
+</html>
